@@ -15,7 +15,7 @@ class Demo {
 	
 	drawGlyph() {
 		let ctx = document.getElementById('glyph-canvas').getContext('2d');
-		ctx.font = `${FONT_SIZE}pt Arial`;
+		ctx.font = `${FONT_SIZE}pt Times New Roman`;
 		ctx.fillStyle = "#ffffff";
 
 		ctx.fillText(
@@ -30,12 +30,12 @@ class Demo {
 
 		// Reduce glyphData to array of alpha channel values.
 		let glyphPixels = glyphData.data.filter((element, index, array) => !((index - 3) % 4));
-		let bgDistPixels = new Uint8ClampedArray(glyphPixels.length);		
+		let bgDistPixels = new Array(glyphPixels.length);		
 		
 		let maxBgDist = this.calcBgDist(glyphPixels, bgDistPixels, w, h);
 		this.drawBgDist(bgDistPixels, w, h, maxBgDist);
 
-		let localMaximaPixels = new Uint8ClampedArray(glyphPixels.length);
+		let localMaximaPixels = new Array(glyphPixels.length);
 		let maximaFreq = this.calcLocalMaxima(bgDistPixels, localMaximaPixels, w, h);
 		this.drawLocalMaxima(localMaximaPixels, w, h, maxBgDist);
 		this.drawMaximaFreq(maximaFreq, w, h);
@@ -212,6 +212,7 @@ class Demo {
 
 		let maximaFreq = {};
 		localMaxima.forEach(maxima => {
+			maxima = Math.round(maxima);
 			maximaFreq[maxima] = maximaFreq[maxima] ? maximaFreq[maxima] + 1 : 1;
 		});
 		console.log(maximaFreq);
