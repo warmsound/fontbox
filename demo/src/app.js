@@ -32,63 +32,65 @@ class Demo {
 
 	calcBgDist(src, dst) {
 		let s = src.data;
-		let d = dst.data;
 
 		const row = (src.width * 4);
+		const ROOT_2 = Math.pow(2, 0.5);
 
-		// For each pixel.
-		for (let i = 0; i < s.length; i += 4) {
+		// x and y are pixel co-ords. Traverse each row before moving down to next.
+		for (let y = 0; y < src.height; ++y) {
+			for (let x = 0; x < src.width; ++x) {
 
-			// If not fully transparent.
-			if (s[i + 3]) {
+				// i is index into pixel data array for pixel at (x, y).
+				let i = ((y * src.width) + x) * 4;
 
-				// Determine minimum axis-aligned distance from background (fully transparent pixel).
+				// j is index into pixel data array for search pixel.
 				let j;
-				let dist = CANVAS_SIZE;
 
-				// Search left.
-				for (j = i - 4; ; j -= 4) {
+				let bgFound = false;
 
-					// If reached edge, or pixel is fully transparent.
-					if ((j < 0) || (s[j + 3] == 0)) {
-						dist = i - j;
-						break;
+				// If pixel is not fully transparent.
+				if (s[i + 3]) {
+
+					// Determine minimum pixel distance from fully transparent background pixel.
+					let d = 1;
+					for (; d < CANVAS_SIZE; ++d) {
+
+						// Search north: (x, y - d).
+						j = (((y - d) * src.width) + x) * 4;
+						if (((y - d) < 0) || s[j] == 0) {
+							bgFound = true;
+							break;
+						}
+
+						// Search east: (x + d, y).
+						j = ((y * src.width) + x + d) * 4;
+						if ((x >= src.width) || s[j] == 0) {
+							bgFound = true;
+							break;
+						}
+
+						// Search south: (x, y + d).
+						j = (((y + d) * src.width) + x) * 4;
+						if (((y + d) >= src.height) || s[j] == 0) {
+							bgFound = true;
+							break;
+						}
+
+						// Search west: (x - d, y).
+						j = ((y * src.width) + x - d) * 4;
+						if ((x < 0) || s[j] == 0) {
+							bgFound = true;
+							break;
+						}
+					}
+
+					// Background or edge was found.
+					// Write fully-opaque greyscale value that represents distance of pixel from background.
+					if (bgFound) {						
+						dst.data[i] = dst.data[i + 1] = dst.data[i + 2] = d * 10;
+						dst.data[i + 3] = 255;
 					}
 				}
-				
-				// Search right. Stop if we reach existing dist.
-				for (j = i + 4; (j - i) < dist; j += 4) {
-
-					// If reached edge, or pixel is fully transparent.
-					if ((j >= s.length) || (s[j + 3] == 0)) {
-						dist = j - i;
-						break;
-					}
-				}
-				
-				// Search up. Stop if we reach existing dist.
-				for (j = i - row; ((i - j) / src.width) < dist; j -= row) {
-
-					// If reached edge, or pixel is fully transparent.
-					if ((j < 0) || (s[j + 3] == 0)) {
-						dist = ((i - j) / src.width);
-						break;
-					}
-				}
-
-				// Search down. Stop if we reach existing dist.
-				for (j = i + row; ((j - i) / src.width) < dist; j += row) {
-
-					// If reached edge, or pixel is fully transparent.
-					if ((j >= s.length) || (s[j + 3] == 0)) {
-						dist = ((j - i) / src.width);
-						break;
-					}
-				}
-
-				// Write fully-opaque greyscale value that represents distance of pixel from background.
-				d[i] = d[i + 1] = d[i + 2] = dist * 5;
-				d[i + 3] = 255;
 			}
 		}
 	}
