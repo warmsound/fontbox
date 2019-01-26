@@ -52,42 +52,70 @@ class Demo {
 				if (s[i + 3]) {
 
 					// Determine minimum pixel distance from fully transparent background pixel.
-					let d = 1;
-					for (; d < CANVAS_SIZE; ++d) {
+					let dist = CANVAS_SIZE;
+					for (let d = 1; d < dist; ++d) {
 
 						// Search north: (x, y - d).
 						j = (((y - d) * src.width) + x) * 4;
-						if (((y - d) < 0) || s[j] == 0) {
+						if ((y - d) < 0 || s[j] == 0) {
+							dist = Math.min(dist, d);
 							bgFound = true;
-							break;
+						}
+
+						// Search north-east: (x + d, y - d).
+						j = (((y - d) * src.width) + x + d) * 4;
+						if ((x + d) >= src.width || (y - d) < 0 || s[j] == 0) {
+							dist = Math.min(dist, d * ROOT_2);
+							bgFound = true;
 						}
 
 						// Search east: (x + d, y).
 						j = ((y * src.width) + x + d) * 4;
-						if ((x >= src.width) || s[j] == 0) {
+						if ((x + d) >= src.width || s[j] == 0) {
+							dist = Math.min(dist, d);
 							bgFound = true;
-							break;
+						}
+
+						// Search south-east: (x + d, y + d).
+						j = (((y + d) * src.width) + x + d) * 4;
+						if ((x + d) >= src.width || (y + d) >= src.height || s[j] == 0) {
+							dist = Math.min(dist, d * ROOT_2);
+							bgFound = true;
 						}
 
 						// Search south: (x, y + d).
 						j = (((y + d) * src.width) + x) * 4;
 						if (((y + d) >= src.height) || s[j] == 0) {
+							dist = Math.min(dist, d);
 							bgFound = true;
-							break;
+						}
+
+						// Search south-west: (x - d, y + d).
+						j = (((y + d) * src.width) + x - d) * 4;
+						if ((x - d) < 0 || (y + d) >= src.height || s[j] == 0) {
+							dist = Math.min(dist, d * ROOT_2);
+							bgFound = true;
 						}
 
 						// Search west: (x - d, y).
 						j = ((y * src.width) + x - d) * 4;
-						if ((x < 0) || s[j] == 0) {
+						if (((x - d) < 0) || s[j] == 0) {
+							dist = Math.min(dist, d);
 							bgFound = true;
-							break;
+						}
+
+						// Search north-west: (x - d, y - d).
+						j = (((y - d) * src.width) + x - d) * 4;
+						if ((x - d) < 0 || (y - d) >= src.height || s[j] == 0) {
+							dist = Math.min(dist, d * ROOT_2);
+							bgFound = true;
 						}
 					}
 
 					// Background or edge was found.
 					// Write fully-opaque greyscale value that represents distance of pixel from background.
-					if (bgFound) {						
-						dst.data[i] = dst.data[i + 1] = dst.data[i + 2] = d * 10;
+					if (bgFound) {
+						dst.data[i] = dst.data[i + 1] = dst.data[i + 2] = dist * 16;
 						dst.data[i + 3] = 255;
 					}
 				}
