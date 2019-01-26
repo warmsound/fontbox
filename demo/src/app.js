@@ -25,19 +25,20 @@ class Demo {
 		//ctx.fillRect(30, 30, 60, 60);
 
 		let glyphData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-		let width = glyphData.width;
-		let height = glyphData.height;
+		let w = glyphData.width;
+		let h = glyphData.height;
 
 		// Reduce glyphData to array of alpha channel values.
 		let glyphPixels = glyphData.data.filter((element, index, array) => !((index - 3) % 4));
 		let bgDistPixels = new Uint8ClampedArray(glyphPixels.length);		
 		
-		let maxBgDist = this.calcBgDist(glyphPixels, bgDistPixels, width, height);
-		this.drawBgDist(bgDistPixels, width, height, maxBgDist);
+		let maxBgDist = this.calcBgDist(glyphPixels, bgDistPixels, w, h);
+		this.drawBgDist(bgDistPixels, w, h, maxBgDist);
 
 		let localMaximaPixels = new Uint8ClampedArray(glyphPixels.length);
-		let maximaFreq = this.calcLocalMaxima(bgDistPixels, localMaximaPixels, width, height);
-		this.drawLocalMaxima(localMaximaPixels, width, height, maxBgDist);
+		let maximaFreq = this.calcLocalMaxima(bgDistPixels, localMaximaPixels, w, h);
+		this.drawLocalMaxima(localMaximaPixels, w, h, maxBgDist);
+		this.drawMaximaFreq(maximaFreq, w, h);
 	}
 
 	calcBgDist(src, dst, w, h) {
@@ -225,6 +226,24 @@ class Demo {
 			data.data[(4 * i) + 3] = 255;
 		}
 		ctx.putImageData(data, 0, 0);
+	}
+
+	drawMaximaFreq(maximaFreq, w, h) {
+		let ctx = document.getElementById('maxima-freq-canvas').getContext('2d');
+		ctx.fillStyle = "#ffffff";
+
+		let xValues = Object.keys(maximaFreq);
+		let maxX = Math.max(...xValues);
+		let maxY = Math.max(...Object.values(maximaFreq));
+		let colWidth = w / (maxX + 1);
+		let yValue;
+
+		for (let i = 1; i <= maxX; ++i) {
+			yValue = maximaFreq[i];
+			if (yValue) {
+				ctx.fillRect(colWidth * i, h - ((yValue / maxY) * h), colWidth, (yValue / maxY) * h);
+			}
+		}		
 	}
 }
 
