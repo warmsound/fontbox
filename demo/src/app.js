@@ -1,5 +1,6 @@
 const CANVAS_SIZE = 120;
 const FONT_SIZE = CANVAS_SIZE; // Font height in px ~= font size in pt.
+const FONT_FACE = 'Times New Roman';
 const MARGIN = 10;
 const GLYPH = 'a';
 
@@ -15,7 +16,7 @@ class Demo {
 	
 	drawGlyph() {
 		let ctx = document.getElementById('glyph-canvas').getContext('2d');
-		ctx.font = `${FONT_SIZE}pt Times New Roman`;
+		ctx.font = `${FONT_SIZE}pt ${FONT_FACE}`;
 		ctx.fillStyle = "#ffffff";
 
 		ctx.fillText(
@@ -171,7 +172,18 @@ class Demo {
 			maxima = Math.floor(maxima);
 			maximaFreq[maxima] = maximaFreq[maxima] ? maximaFreq[maxima] + 1 : 1;
 		});
-		console.log(maximaFreq);
+		console.log('Frequency table', maximaFreq);
+
+		let sum = localMaxima.reduce((accumulator, currentValue) => accumulator + currentValue);
+		let mean = sum / localMaxima.length;
+		console.log('Mean', mean);
+
+		let squaredDiffs = localMaxima.map(value => Math.pow(value - mean, 2));
+		let sumSquaredDiffs = squaredDiffs.reduce((accumulator, currentValue) => accumulator + currentValue);
+		let variance = sumSquaredDiffs / squaredDiffs.length;
+		let stdDev = Math.pow(variance, 0.5);
+		console.log('Std dev', stdDev);
+
 		return maximaFreq;
 	}
 
