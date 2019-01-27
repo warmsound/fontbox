@@ -42,86 +42,47 @@ class Demo {
 	}
 
 	calcBgDist(src, dst, w, h) {
-		const ROOT_2 = Math.pow(2, 0.5);
-
 		let maxDist = 0;
 
-		let i; // Index for pixel at (x, y).
-		let j; // Index for search pixel.
-		let bgFound;
-
+		// For each pixel at (x, y).
 		for (let y = 0; y < h; ++y) {
 			for (let x = 0; x < w; ++x) {
-				i = x + (y * w);
-				bgFound = false;
 
-				// If pixel is not fully transparent.
+				// If pixel is not transparent.
+				let i = x + (y * w);
 				if (src[i]) {
 
-					// Determine minimum pixel distance from fully transparent background pixel.
-					let dist = CANVAS_SIZE;
-					for (let d = 1; d < dist; ++d) {
+					// Determine minimum distance from background.
+					// Perform rectangular laps of "radius" r around pixel at (x, y), starting at north-west, running clockwise.
+					// Test pixel at (x + dx, y + dy).
+					let dist = Infinity;
+					let dx, dy;
+					for (let r = 1; r < dist; ++r) {
 
-						// Search north: (x, y - d).
-						j = x + ((y - d) * w);
-						if ((y - d) < 0 || src[j] == 0) {
-							dist = Math.min(dist, d);
-							bgFound = true;
+						// Top.
+						for (dx = -r, dy = -r; dx < r; ++dx) {
+							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
 						}
 
-						// Search north-east: (x + d, y - d).
-						j = (x + d) + ((y - d) * w);
-						if ((x + d) >= w || (y - d) < 0 || src[j] == 0) {
-							dist = Math.min(dist, d * ROOT_2);
-							bgFound = true;
+						// Right.
+						for (dx = r, dy = -r; dy < r; ++dy) {
+							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
 						}
 
-						// Search east: (x + d, y).
-						j = (x + d) + (y * w);
-						if ((x + d) >= w || src[j] == 0) {
-							dist = Math.min(dist, d);
-							bgFound = true;
+						// Bottom.
+						for (dx = r, dy = r; -dx < r; --dx) {
+							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
 						}
 
-						// Search south-east: (x + d, y + d).
-						j = (x + d) + ((y + d) * w);
-						if ((x + d) >= w || (y + d) >= h || src[j] == 0) {
-							dist = Math.min(dist, d * ROOT_2);
-							bgFound = true;
-						}
-
-						// Search south: (x, y + d).
-						j = x + ((y + d) * w);
-						if (((y + d) >= h) || src[j] == 0) {
-							dist = Math.min(dist, d);
-							bgFound = true;
-						}
-
-						// Search south-west: (x - d, y + d).
-						j = (x - d) + ((y + d) * w);
-						if ((x - d) < 0 || (y + d) >= h || src[j] == 0) {
-							dist = Math.min(dist, d * ROOT_2);
-							bgFound = true;
-						}
-
-						// Search west: (x - d, y).
-						j = (x - d) + (y * w);
-						if (((x - d) < 0) || src[j] == 0) {
-							dist = Math.min(dist, d);
-							bgFound = true;
-						}
-
-						// Search north-west: (x - d, y - d).
-						j = (x - d) + ((y - d) * w);
-						if ((x - d) < 0 || (y - d) >= h || src[j] == 0) {
-							dist = Math.min(dist, d * ROOT_2);
-							bgFound = true;
+						// Left.
+						for (dx = -r, dy = r; -dy < r; --dy) {
+							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
 						}
 					}
 
-					// Background or edge was found.
-					// Write fully-opaque greyscale value that represents distance of pixel from background.
-					if (bgFound) {
+					// Background distance was found.
+					// Write value into corresponding pixel in dst that represents distance of pixel from background.
+					if (dist < Infinity) {
 						dst[i] = dist;
 						maxDist = Math.max(dist, maxDist);
 					}
@@ -130,6 +91,25 @@ class Demo {
 		}
 
 		return maxDist;
+	}
+
+	testPixel(src, w, h, x, dx, y, dy) {
+		//console.log(dx, dy);
+		let dist = Infinity;
+
+		let isPixelInBounds = (x + dx) >= 0 &&
+			(x + dx) < w &&
+			(y + dy) >= 0 &&
+			(y + dy) < h;
+
+		// If pixel is out of bounds, or is background.
+		if (!isPixelInBounds || src[(x + dx) + ((y + dy) * w)] == 0) {
+
+			// Return pythagorean distance of test pixel from current
+			dist = Math.pow((dx * dx) + (dy * dy), 0.5);
+		}
+
+		return dist;
 	}
 
 	drawBgDist(pixels, w, h, max) {
@@ -146,7 +126,7 @@ class Demo {
 		let localMaxima = [];
 
 		let i; // Index for pixel at (x, y).
-		let j; // Index for search pixel.
+		let j; // Index for test pixel.
 
 		// x and y are pixel co-ords. Traverse each row before moving down to next.
 		for (let y = 0; y < h; ++y) {
@@ -156,63 +136,39 @@ class Demo {
 				// If pixel is not fully transparent.
 				if (src[i]) {
 
-					// Search north: (x, y - 1).
+					// Test north: (x, y - 1).
 					j = x + ((y - 1) * w);
 					if ((y - 1) >= 0 && src[j] > src[i]) {
 						continue;
 					}
 
-					// Search north-east: (x + 1, y - 1).
-					j = (x + 1) + ((y - 1) * w);
-					if ((x + 1) < w && (y - 1) >= 0 && src[j] > src[i]) {
-						continue;
-					}
-
-					// Search east: (x + 1, y).
+					// Test east: (x + 1, y).
 					j = (x + 1) + (y * w);
 					if ((x + 1) < w && src[j] > src[i]) {
 						continue;
 					}
 
-					// Search south-east: (x + 1, y + 1).
-					j = (x + 1) + ((y + 1) * w);
-					if ((x + 1) < w && (y + 1) < h && src[j] > src[i]) {
-						continue
-					}
-
-					// Search south: (x, y + 1).
+					// Test south: (x, y + 1).
 					j = x + ((y + 1) * w);
 					if (((y + 1) < h) && src[j] > src[i]) {
 						continue;
 					}
 
-					// Search south-west: (x - 1, y + 1).
-					j = (x - 1) + ((y + 1) * w);
-					if ((x - 1) >= 0 && (y + 1) < h && src[j] > src[i]) {
-						continue
-					}
-
-					// Search west: (x - 1, y).
+					// Test west: (x - 1, y).
 					j = (x - 1) + (y * w);
 					if (((x - 1) >= 0) && src[j] > src[i]) {
 						continue;
 					}
 
-					// Search north-west: (x - 1, y - 1).
-					j = (x - 1) + ((y - 1) * w);
-					if ((x - 1) >= 0 && (y - 1) < h && src[j] > src[i]) {
-						continue;
-					}
-
 					dst[i] = src[i];
-					localMaxima.push(src[j]);
+					localMaxima.push(src[i]);
 				}
 			}
 		}
 
 		let maximaFreq = {};
 		localMaxima.forEach(maxima => {
-			maxima = Math.round(maxima);
+			maxima = Math.floor(maxima);
 			maximaFreq[maxima] = maximaFreq[maxima] ? maximaFreq[maxima] + 1 : 1;
 		});
 		console.log(maximaFreq);
@@ -236,7 +192,7 @@ class Demo {
 		let xValues = Object.keys(maximaFreq);
 		let maxX = Math.max(...xValues);
 		let maxY = Math.max(...Object.values(maximaFreq));
-		let colWidth = w / (maxX + 1);
+		let colWidth = Math.floor(w / (maxX + 1));
 		let yValue;
 
 		for (let i = 1; i <= maxX; ++i) {
