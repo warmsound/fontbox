@@ -62,22 +62,22 @@ class Demo {
 
 						// Top.
 						for (dx = -r, dy = -r; dx < r; ++dx) {
-							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
+							dist = Math.min(dist, this.getPixelBgDist(src, w, h, x, dx, y, dy));
 						}
 
 						// Right.
 						for (dx = r, dy = -r; dy < r; ++dy) {
-							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
+							dist = Math.min(dist, this.getPixelBgDist(src, w, h, x, dx, y, dy));
 						}
 
 						// Bottom.
-						for (dx = r, dy = r; -dx < r; --dx) {
-							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
+						for (dx = r, dy = r; dx > -r; --dx) {
+							dist = Math.min(dist, this.getPixelBgDist(src, w, h, x, dx, y, dy));
 						}
 
 						// Left.
-						for (dx = -r, dy = r; -dy < r; --dy) {
-							dist = Math.min(dist, this.testPixel(src, w, h, x, dx, y, dy));
+						for (dx = -r, dy = r; dy > -r; --dy) {
+							dist = Math.min(dist, this.getPixelBgDist(src, w, h, x, dx, y, dy));
 						}
 					}
 
@@ -94,14 +94,10 @@ class Demo {
 		return maxDist;
 	}
 
-	testPixel(src, w, h, x, dx, y, dy) {
-		//console.log(dx, dy);
+	getPixelBgDist(src, w, h, x, dx, y, dy) {
 		let dist = Infinity;
 
-		let isPixelInBounds = (x + dx) >= 0 &&
-			(x + dx) < w &&
-			(y + dy) >= 0 &&
-			(y + dy) < h;
+		let isPixelInBounds = this.isPixelInBounds(w, h, x, dx, y, dy);
 
 		// If pixel is out of bounds, or is background.
 		if (!isPixelInBounds || src[(x + dx) + ((y + dy) * w)] == 0) {
@@ -111,6 +107,13 @@ class Demo {
 		}
 
 		return dist;
+	}
+
+	isPixelInBounds(w, h, x, dx, y, dy) {
+		return (x + dx) >= 0 &&
+			(x + dx) < w &&
+			(y + dy) >= 0 &&
+			(y + dy) < h;
 	}
 
 	drawBgDist(pixels, w, h, max) {
@@ -127,7 +130,6 @@ class Demo {
 		let localMaxima = [];
 
 		let i; // Index for pixel at (x, y).
-		let j; // Index for test pixel.
 
 		// x and y are pixel co-ords. Traverse each row before moving down to next.
 		for (let y = 0; y < h; ++y) {
@@ -138,26 +140,22 @@ class Demo {
 				if (src[i]) {
 
 					// Test north: (x, y - 1).
-					j = x + ((y - 1) * w);
-					if ((y - 1) >= 0 && src[j] > src[i]) {
+					if (this.isNeighbourPixelBrighter(src, w, h, x, 0, y, -1, i)) {
 						continue;
 					}
 
 					// Test east: (x + 1, y).
-					j = (x + 1) + (y * w);
-					if ((x + 1) < w && src[j] > src[i]) {
+					if (this.isNeighbourPixelBrighter(src, w, h, x, +1, y, 0, i)) {
 						continue;
 					}
 
 					// Test south: (x, y + 1).
-					j = x + ((y + 1) * w);
-					if (((y + 1) < h) && src[j] > src[i]) {
+					if (this.isNeighbourPixelBrighter(src, w, h, x, 0, y, +1, i)) {
 						continue;
 					}
 
 					// Test west: (x - 1, y).
-					j = (x - 1) + (y * w);
-					if (((x - 1) >= 0) && src[j] > src[i]) {
+					if (this.isNeighbourPixelBrighter(src, w, h, x, -1, y, 0, i)) {
 						continue;
 					}
 
@@ -185,6 +183,14 @@ class Demo {
 		console.log('Std dev', stdDev);
 
 		return maximaFreq;
+	}
+
+	isNeighbourPixelBrighter(src, w, h, x, dx, y, dy, i) {
+		if (this.isPixelInBounds(w, h, x, dx, y, dy)) {
+			let j = (x + dx) + ((y + dy) * w); // Index for test pixel.
+			return (src[j] > src[i]);
+		}
+		return false;
 	}
 
 	drawLocalMaxima(pixels, w, h, max) {
