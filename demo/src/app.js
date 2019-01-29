@@ -2,7 +2,7 @@ const CANVAS_SIZE = 120;
 const FONT_SIZE = CANVAS_SIZE; // Font height in px ~= font size in pt.
 const FONT_FACE = 'Times New Roman';
 const MARGIN = 10;
-const GLYPH = 'a';
+const GLYPH = 'o';
 
 class Demo {
 
@@ -17,12 +17,13 @@ class Demo {
 	drawGlyph() {
 		let ctx = document.getElementById('glyph-canvas').getContext('2d');
 		ctx.font = `${FONT_SIZE}pt ${FONT_FACE}`;
-		ctx.fillStyle = "#ffffff";
+		ctx.fillStyle = '#ffffff';
+		ctx.textBaseline = 'bottom';
 
 		ctx.fillText(
 			GLYPH,
 			(CANVAS_SIZE - ctx.measureText(GLYPH).width) / 2,
-			CANVAS_SIZE - MARGIN);
+			CANVAS_SIZE);
 		//ctx.fillRect(30, 30, 60, 60);
 
 		let glyphData = ctx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
