@@ -25,14 +25,12 @@ class FontAnalyser {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		this.ctx.font = `${this.config.fontSize}pt ${this.fontFace}`;
 		let avgCharWidth = this.ctx.measureText(this.config.widthString).width / this.config.widthString.length;
-		console.log('avgCharWidth', avgCharWidth);
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// X-height.
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		this.drawGlyph(this.config.xHeightGlyph);
 		let { height: xHeight } = this.getBounds();
-		console.log('xHeight', xHeight);
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Weight, contrast.
@@ -50,7 +48,23 @@ class FontAnalyser {
 		let maxima = this.calcLocalMaxima(bgDistImageData, maximaImageData, width, height);
 
 		let maximaStats = this.calcMaximaStats(maxima);
-		console.log(maximaStats);
+
+		return {
+			metrics: {
+				avgCharWidth,
+				xHeight,
+				averageWeight: maximaStats.averageWeight,
+				contrast: maximaStats.contrast
+			},
+			raw: {
+				width,
+				height,				
+				bgDistImageData,
+				maxBgDist,
+				maximaImageData,
+				maxima
+			}
+		};
 	}
 
 	drawGlyph(glyph) {
@@ -277,4 +291,4 @@ class FontAnalyser {
 	}
 }
 
-new FontAnalyser('Times New Roman' /* , { canvas: document.getElementById('glyph-canvas')} */).analyse();
+export { FontAnalyser };
